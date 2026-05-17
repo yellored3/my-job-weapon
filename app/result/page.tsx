@@ -154,22 +154,25 @@ ${roleData?.expertQuote}
         return;
       }
 
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      const isInApp = /KAKAOTALK|NAVER|Instagram|FB_IAB|FBAN|FBAV/i.test(navigator.userAgent);
+
       const canvas = await html2canvas(element, {
-        scale: 2,
+        scale: isMobile ? 1.5 : 2,
         useCORS: true,
-        allowTaint: true,
         backgroundColor: "#ffffff",
         logging: false,
       });
 
-      // 카카오톡 인앱 브라우저: window.open이 차단되므로 현재 페이지에 오버레이로 표시
-      if (/KAKAOTALK/i.test(navigator.userAgent)) {
+      // 모바일 전체(iOS · Android) + 인앱 브라우저(카카오톡 · 네이버 · 인스타 등)
+      // → 오버레이로 이미지 표시 후 "길게 눌러 저장" 안내
+      if (isMobile || isInApp) {
         setImageDataUrl(canvas.toDataURL("image/png"));
         setIsCapturing(false);
         return;
       }
 
-      // toBlob을 Promise로 래핑해서 await 처리 (finally 타이밍 버그 방지)
+      // 데스크탑: 파일 직접 다운로드
       const blob = await new Promise<Blob | null>((resolve) =>
         canvas.toBlob(resolve, "image/png")
       );
@@ -180,24 +183,6 @@ ${roleData?.expertQuote}
         return;
       }
 
-      // Web Share API — iOS/Android 네이티브 저장 다이얼로그
-      const file = new File([blob], "취업무기리포트.png", { type: "image/png" });
-      if (typeof navigator.share === "function" && navigator.canShare?.({ files: [file] })) {
-        try {
-          await navigator.share({ files: [file], title: "나만의 취업 무기 리포트" });
-          setIsCapturing(false);
-          return;
-        } catch (e) {
-          if ((e as Error).name === "AbortError") {
-            // 사용자가 공유 취소 — 추가 동작 없이 종료
-            setIsCapturing(false);
-            return;
-          }
-          // 공유 API 실패 → 다운로드로 fallback
-        }
-      }
-
-      // 데스크탑 / 일반 브라우저 다운로드
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
