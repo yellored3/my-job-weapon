@@ -213,8 +213,10 @@ ${roleData?.expertQuote}
     try {
       const html2canvas = (await import("html2canvas")).default;
       const cardIds = ["capture-card-1", "capture-card-2", "capture-card-3"];
+      // 기기 픽셀비율 사용 (Retina/고해상도 화질) — 간소화 카드라 iOS 캔버스 한도 문제 없음
+      const scale = isMobile ? Math.min(window.devicePixelRatio || 2, 3) : 2;
       const options = {
-        scale: isMobile ? 1 : 2,
+        scale,
         useCORS: true,
         allowTaint: true,
         backgroundColor: "#ffffff",
