@@ -219,27 +219,30 @@ ${roleData?.expertQuote}
         return;
       }
 
-      // 카카오톡 WebView: scale 낮추고 foreignObjectRendering 비활성화로 안정성 확보
       const canvas = await html2canvas(element, {
-        scale: isKakao ? 1 : (isMobile ? 1.5 : 2),
+        // 모바일은 scale 1 고정 — iOS 캔버스 크기 한도(4096px) 초과 방지
+        scale: isMobile ? 1 : 2,
         useCORS: true,
         allowTaint: true,
         backgroundColor: "#ffffff",
         logging: false,
         foreignObjectRendering: false,
         imageTimeout: 0,
+        onclone: (clonedDoc: Document) => {
+          // 애니메이션/트랜지션 제거 — html2canvas가 복잡한 CSS 애니메이션에서 실패하는 것 방지
+          const card = clonedDoc.getElementById("result-card");
+          if (card) {
+            card.querySelectorAll<HTMLElement>("*").forEach((el) => {
+              el.style.animation = "none";
+              el.style.transition = "none";
+            });
+          }
+        },
       });
 
-      // 모바일 또는 인앱 브라우저 → 오버레이로 이미지 표시 후 "길게 눌러 저장" 안내
+      // 모바일/인앱 브라우저 → 오버레이로 이미지 표시 후 "길게 눌러 저장" 안내
       if (isMobile || isInApp) {
-        try {
-          setImageDataUrl(canvas.toDataURL("image/png"));
-        } catch {
-          alert(
-            "이미지 생성에 실패했습니다.\n스크린샷 기능을 이용해 주세요.\n\n" +
-            "• iPhone: 전원 + 볼륨업\n• 갤럭시/안드로이드: 전원 + 볼륨다운"
-          );
-        }
+        setImageDataUrl(canvas.toDataURL("image/png"));
         setIsCapturing(false);
         return;
       }
