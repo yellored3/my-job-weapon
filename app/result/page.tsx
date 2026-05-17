@@ -304,18 +304,6 @@ ${roleData?.expertQuote}
           </div>
         ))}
       </div>
-      <div style={{ padding:"18px 20px", background:"#0f172a", borderBottom:"1px solid #1e293b" }}>
-        <div style={{ fontSize:"10px", color:"#94a3b8", marginBottom:"10px" }}>나의 강점 키워드 3종</div>
-        <div>
-          {roleData?.keywords.map((kw, i) => (
-            <span key={i} style={{ display:"inline-block", margin:"0 6px 6px 0", padding:"4px 12px", background:"#1e293b", border:"1px solid #334155", color:"#f97316", fontWeight:"700", borderRadius:"6px", fontSize:"13px" }}>#{kw}</span>
-          ))}
-        </div>
-      </div>
-      <div style={{ padding:"18px 20px", background:"#1e293b", color:"#ffffff" }}>
-        <div style={{ fontSize:"10px", color:"#f97316", fontWeight:"700", marginBottom:"8px" }}>전문가 한 줄 평</div>
-        <div style={{ fontSize:"13px", lineHeight:"1.6", color:"#e2e8f0" }}>{roleData?.expertQuote}</div>
-      </div>
       <div style={{ padding:"10px", background:"#f1f5f9", textAlign:"center", fontSize:"10px", color:"#94a3b8" }}>나만의 취업 무기 리포트</div>
     </div>
 
