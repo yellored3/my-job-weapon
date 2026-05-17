@@ -213,14 +213,14 @@ ${roleData?.expertQuote}
     setIsCapturing(true);
     try {
       const html2canvas = (await import("html2canvas")).default;
-      const element = document.getElementById("result-card");
+      const element = document.getElementById("capture-card");
       if (!element) {
         setIsCapturing(false);
         return;
       }
 
+      // 캡처 전용 간소화 카드 사용 — Tailwind·SVG·애니메이션 없이 인라인 스타일만 사용
       const canvas = await html2canvas(element, {
-        // 모바일은 scale 1 고정 — iOS 캔버스 크기 한도(4096px) 초과 방지
         scale: isMobile ? 1 : 2,
         useCORS: true,
         allowTaint: true,
@@ -228,16 +228,6 @@ ${roleData?.expertQuote}
         logging: false,
         foreignObjectRendering: false,
         imageTimeout: 0,
-        onclone: (clonedDoc: Document) => {
-          // 애니메이션/트랜지션 제거 — html2canvas가 복잡한 CSS 애니메이션에서 실패하는 것 방지
-          const card = clonedDoc.getElementById("result-card");
-          if (card) {
-            card.querySelectorAll<HTMLElement>("*").forEach((el) => {
-              el.style.animation = "none";
-              el.style.transition = "none";
-            });
-          }
-        },
       });
 
       // 모바일/인앱 브라우저 → 오버레이로 이미지 표시 후 "길게 눌러 저장" 안내
@@ -290,7 +280,94 @@ ${roleData?.expertQuote}
 
   return (
     <>
-    {/* 카카오톡 이미지 저장 오버레이 */}
+    {/* 캡처 전용 간소화 카드 — 화면 밖 고정, 인라인 스타일만 사용 (Tailwind·SVG·애니메이션 없음) */}
+    <div
+      id="capture-card"
+      style={{
+        position: "fixed",
+        left: "-9999px",
+        top: 0,
+        width: "360px",
+        backgroundColor: "#ffffff",
+        fontFamily: "system-ui, -apple-system, sans-serif",
+      }}
+    >
+      {/* 헤더 */}
+      <div style={{ background: "#1e3a8a", color: "#ffffff", padding: "28px 20px", textAlign: "center" }}>
+        <div style={{ fontSize: "10px", letterSpacing: "3px", marginBottom: "10px", opacity: 0.7 }}>OFFICIAL CERTIFICATE</div>
+        <div style={{ fontSize: "24px", fontWeight: "900", lineHeight: "1.3", marginBottom: "8px" }}>{personaTitle}</div>
+        <div style={{ fontSize: "13px", opacity: 0.85 }}>나만의 취업 무기 통합 리포트</div>
+      </div>
+
+      {/* 직업관 */}
+      <div style={{ padding: "18px 20px", borderBottom: "1px solid #e2e8f0", background: "#f8fafc" }}>
+        <div style={{ fontSize: "10px", color: "#94a3b8", letterSpacing: "2px", marginBottom: "8px" }}>나의 직업관</div>
+        <div style={{ fontSize: "15px", fontWeight: "700", color: "#1e293b", marginBottom: "6px" }}>
+          나에게 일이란 &quot;{state.step1.meaning}&quot;이다.
+        </div>
+        <div style={{ fontSize: "13px", color: "#64748b" }}>왜냐하면 {state.step1.reason} 때문입니다.</div>
+      </div>
+
+      {/* 필수 기준 */}
+      <div style={{ padding: "18px 20px", borderBottom: "1px solid #e2e8f0" }}>
+        <div style={{ fontSize: "11px", fontWeight: "700", color: "#1e3a8a", marginBottom: "12px" }}>✓ 필수로 찾아야 할 공간</div>
+        {top3Values.map((val, idx) => (
+          <div key={idx} style={{ marginBottom: "10px" }}>
+            <div style={{ fontSize: "11px", color: "#2563eb", fontWeight: "700", marginBottom: "2px" }}>Top {idx + 1}. {val}</div>
+            <div style={{ fontSize: "12px", color: "#334155", lineHeight: "1.5" }}>{VALUE_MAPPINGS[val]?.mustHave}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* 피해야 할 기준 */}
+      <div style={{ padding: "18px 20px", borderBottom: "1px solid #e2e8f0" }}>
+        <div style={{ fontSize: "11px", fontWeight: "700", color: "#64748b", marginBottom: "12px" }}>! 가급적 피해야 할 공간</div>
+        {bottom3Values.map((val, idx) => (
+          <div key={idx} style={{ marginBottom: "10px" }}>
+            <div style={{ fontSize: "11px", color: "#94a3b8", fontWeight: "700", marginBottom: "2px" }}>Bottom {idx + 1}. {val}</div>
+            <div style={{ fontSize: "12px", color: "#334155", lineHeight: "1.5" }}>{VALUE_MAPPINGS[val]?.bottomAvoid}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* 강점 키워드 */}
+      <div style={{ padding: "18px 20px", background: "#0f172a", borderBottom: "1px solid #1e293b" }}>
+        <div style={{ fontSize: "10px", color: "#94a3b8", marginBottom: "10px" }}>나의 강점 키워드 3종</div>
+        <div>
+          {roleData?.keywords.map((kw, i) => (
+            <span
+              key={i}
+              style={{
+                display: "inline-block",
+                margin: "0 6px 6px 0",
+                padding: "4px 12px",
+                background: "#1e293b",
+                border: "1px solid #334155",
+                color: "#f97316",
+                fontWeight: "700",
+                borderRadius: "6px",
+                fontSize: "13px",
+              }}
+            >
+              #{kw}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      {/* 전문가 한 줄 평 */}
+      <div style={{ padding: "18px 20px", background: "#1e293b", color: "#ffffff" }}>
+        <div style={{ fontSize: "10px", color: "#f97316", fontWeight: "700", marginBottom: "8px", letterSpacing: "1px" }}>전문가 한 줄 평</div>
+        <div style={{ fontSize: "13px", lineHeight: "1.6", color: "#e2e8f0" }}>{roleData?.expertQuote}</div>
+      </div>
+
+      {/* 푸터 */}
+      <div style={{ padding: "10px", background: "#f1f5f9", textAlign: "center", fontSize: "10px", color: "#94a3b8" }}>
+        나만의 취업 무기 리포트
+      </div>
+    </div>
+
+    {/* 이미지 저장 오버레이 */}
     {imageDataUrl && (
       <div
         className="fixed inset-0 bg-black/90 z-50 flex flex-col items-center justify-center p-4 gap-5"
