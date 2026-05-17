@@ -93,13 +93,13 @@ export default function Step2Page() {
                   exit={{ opacity: 0, scale: 0.9 }}
                   className="flex items-center justify-between p-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-100/80 dark:border-slate-700/60 shadow-sm hover:shadow transition-all duration-200"
                 >
-                  <span className="font-semibold text-slate-700 dark:text-slate-200">{val}</span>
-                  <div className="flex gap-2">
+                  <span className="font-semibold text-slate-700 dark:text-slate-200 pr-2">{val}</span>
+                  <div className="flex gap-2 flex-shrink-0">
                     <motion.button
                       whileTap={{ scale: 0.92 }}
                       onClick={() => handleMoveToTop(val)}
                       disabled={top5.length >= 5 || clickedState !== null}
-                      className={`px-3.5 py-1.8 text-xs font-bold rounded-xl border transition-all duration-150 flex items-center gap-1.5 disabled:opacity-30 disabled:cursor-not-allowed ${
+                      className={`px-3 py-1.8 text-xs font-bold rounded-xl border transition-all duration-150 flex items-center justify-center gap-1.5 whitespace-nowrap min-w-20 disabled:opacity-30 disabled:cursor-not-allowed ${
                         clickedState?.val === val && clickedState?.type === "top"
                           ? "bg-brand-orange text-white border-brand-orange shadow-[inset_0_2px_4px_rgba(0,0,0,0.15)] scale-95"
                           : "bg-orange-50/80 text-brand-orange border-orange-200/80 shadow-[0_2px_4px_rgba(249,115,22,0.06)] hover:bg-orange-100/70 active:bg-brand-orange active:text-white"
@@ -112,7 +112,7 @@ export default function Step2Page() {
                       whileTap={{ scale: 0.92 }}
                       onClick={() => handleMoveToBottom(val)}
                       disabled={bottom5.length >= 5 || clickedState !== null}
-                      className={`px-3.5 py-1.8 text-xs font-bold rounded-xl border transition-all duration-150 flex items-center gap-1.5 disabled:opacity-30 disabled:cursor-not-allowed ${
+                      className={`px-3 py-1.8 text-xs font-bold rounded-xl border transition-all duration-150 flex items-center justify-center gap-1.5 whitespace-nowrap min-w-20 disabled:opacity-30 disabled:cursor-not-allowed ${
                         clickedState?.val === val && clickedState?.type === "bottom"
                           ? "bg-slate-600 text-white border-slate-600 shadow-[inset_0_2px_4px_rgba(0,0,0,0.15)] scale-95"
                           : "bg-slate-100/80 text-slate-600 border-slate-200/80 shadow-[0_2px_4px_rgba(15,23,42,0.05)] hover:bg-slate-200/70 active:bg-slate-600 active:text-white"

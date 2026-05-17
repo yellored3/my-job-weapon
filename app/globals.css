@@ -1,7 +1,11 @@
 @import "tailwindcss";
 
+/* dark: 유틸리티를 미디어쿼리가 아닌 .dark 클래스 기반으로 변경.
+   html 요소에 .dark를 붙이지 않으므로 시스템 다크모드와 무관하게 항상 라이트모드 유지. */
+@variant dark (&:where(.dark, .dark *));
+
 :root {
-  --background: #ffffff; /* 완전한 흰색 (모바일 기준 통일) */
+  --background: #ffffff;
   --foreground: #0f172a; /* Slate 900 */
 }
 
@@ -10,13 +14,6 @@
   --color-foreground: var(--foreground);
   --color-brand-blue: #1E40AF;
   --color-brand-orange: #F97316;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0f172a;
-    --foreground: #f8fafc;
-  }
 }
 
 body {

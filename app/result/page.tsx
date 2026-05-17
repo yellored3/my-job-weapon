@@ -13,6 +13,7 @@ export default function ResultPage() {
   const [mounted, setMounted] = useState(false);
   const [copied, setCopied] = useState(false);
   const [isCapturing, setIsCapturing] = useState(false);
+  const [imageDataUrl, setImageDataUrl] = useState<string | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -63,8 +64,8 @@ export default function ResultPage() {
     if (/안정|두려|불안|걱정|무서|리스크|위험|조심|안전/.test(text)) {
       return `'${r}'이라는 이유는, 불확실성을 줄이고 싶은 심리적 동기를 내포하고 있습니다. 이 안정 지향적 성향이 '${v}'을/를 핵심 기준으로 삼게 한 배경이며, 예측 가능하고 안전한 환경에서 역량이 가장 안정적으로 발휘됩니다.`;
     }
-    // 위 패턴에 해당하지 않는 경우: 입력 텍스트를 직접 반영한 일반 분석
-    return `'${r}'이라는 이유는, 일을 '${m}'(으)로 정의하게 만든 직접적 배경입니다. 이 두 가지가 연결되는 지점에서 '${v}'을/를 가장 중요한 가치로 선택한 이유도 자연스럽게 설명됩니다.`;
+    // 위 패턴에 해당하지 않는 경우
+    return `일을 '${m}'(으)로 인식하면서 '${r}'이라는 현실을 함께 안고 있다는 것은, 일과 자신의 관계를 환상 없이 직시하고 있다는 뜻입니다. 자신의 상황을 이처럼 솔직하게 바라보는 사람일수록, '${v}'처럼 스스로에게 실질적으로 의미 있는 가치를 의식적으로 추구하는 전략이 가장 강력한 취업 무기가 됩니다.`;
   })();
 
   const handleCopy = async () => {
@@ -148,59 +149,64 @@ ${roleData?.expertQuote}
     try {
       const html2canvas = (await import("html2canvas")).default;
       const element = document.getElementById("result-card");
-      if (!element) return;
+      if (!element) {
+        setIsCapturing(false);
+        return;
+      }
 
       const canvas = await html2canvas(element, {
         scale: 2,
         useCORS: true,
+        allowTaint: true,
         backgroundColor: "#ffffff",
         logging: false,
       });
 
-      canvas.toBlob(async (blob) => {
-        if (!blob) return;
+      // 카카오톡 인앱 브라우저: window.open이 차단되므로 현재 페이지에 오버레이로 표시
+      if (/KAKAOTALK/i.test(navigator.userAgent)) {
+        setImageDataUrl(canvas.toDataURL("image/png"));
+        setIsCapturing(false);
+        return;
+      }
 
-        // 1순위: Web Share API — iOS/Android 네이티브 저장 다이얼로그
-        const file = new File([blob], "취업무기리포트.png", { type: "image/png" });
-        if (typeof navigator.share === "function" && navigator.canShare?.({ files: [file] })) {
-          try {
-            await navigator.share({ files: [file], title: "나만의 취업 무기 리포트" });
+      // toBlob을 Promise로 래핑해서 await 처리 (finally 타이밍 버그 방지)
+      const blob = await new Promise<Blob | null>((resolve) =>
+        canvas.toBlob(resolve, "image/png")
+      );
+
+      if (!blob) {
+        alert("이미지 생성에 실패했습니다. 스크린샷을 이용해 주세요.");
+        setIsCapturing(false);
+        return;
+      }
+
+      // Web Share API — iOS/Android 네이티브 저장 다이얼로그
+      const file = new File([blob], "취업무기리포트.png", { type: "image/png" });
+      if (typeof navigator.share === "function" && navigator.canShare?.({ files: [file] })) {
+        try {
+          await navigator.share({ files: [file], title: "나만의 취업 무기 리포트" });
+          setIsCapturing(false);
+          return;
+        } catch (e) {
+          if ((e as Error).name === "AbortError") {
+            // 사용자가 공유 취소 — 추가 동작 없이 종료
+            setIsCapturing(false);
             return;
-          } catch {
-            // 사용자 취소 등 — 다음 단계로 진행
           }
+          // 공유 API 실패 → 다운로드로 fallback
         }
+      }
 
-        // 2순위: 일반 브라우저 다운로드
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = "취업무기리포트.png";
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
+      // 데스크탑 / 일반 브라우저 다운로드
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "취업무기리포트.png";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 10000);
 
-        // 3순위: 카카오톡 등 다운로드 차단 브라우저 — 새 탭에서 이미지 열기
-        // (브라우저가 download 속성을 무시한 경우 blob URL이 남아있어 새 탭으로도 열림)
-        setTimeout(() => {
-          URL.revokeObjectURL(url);
-        }, 10000);
-
-        // 카카오톡 감지 시 새 탭 fallback
-        if (/KAKAOTALK/i.test(navigator.userAgent)) {
-          const dataURL = canvas.toDataURL("image/png");
-          const newTab = window.open("", "_blank");
-          if (newTab) {
-            newTab.document.write(
-              `<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><title>취업무기리포트</title>` +
-              `<style>body{margin:0;background:#111;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;gap:16px}` +
-              `p{color:#fff;font-size:15px;text-align:center;padding:0 16px}img{max-width:100%;height:auto}</style></head>` +
-              `<body><p>📸 이미지를 <strong>길게 눌러</strong> 사진 앱에 저장하세요</p><img src="${dataURL}"/></body></html>`
-            );
-            newTab.document.close();
-          }
-        }
-      }, "image/png");
     } catch {
       alert("이미지 저장에 실패했습니다. 스크린샷을 이용해 주세요.");
     } finally {
@@ -216,7 +222,32 @@ ${roleData?.expertQuote}
   };
 
   return (
-    <motion.div 
+    <>
+    {/* 카카오톡 이미지 저장 오버레이 */}
+    {imageDataUrl && (
+      <div
+        className="fixed inset-0 bg-black/90 z-50 flex flex-col items-center justify-center p-4 gap-5"
+        onClick={() => setImageDataUrl(null)}
+      >
+        <p className="text-white text-center font-bold text-base leading-relaxed">
+          📸 이미지를 <strong className="text-yellow-300">길게 눌러</strong> 사진 앱에 저장하세요
+        </p>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={imageDataUrl}
+          alt="취업무기리포트"
+          className="max-w-full max-h-[72vh] object-contain rounded-xl shadow-2xl"
+          onClick={(e) => e.stopPropagation()}
+        />
+        <button
+          onClick={() => setImageDataUrl(null)}
+          className="px-6 py-2 bg-white/20 hover:bg-white/30 text-white rounded-full text-sm transition-colors"
+        >
+          닫기
+        </button>
+      </div>
+    )}
+    <motion.div
       initial={{ opacity: 0, y: 100 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.8, ease: "easeOut" }}
@@ -491,5 +522,6 @@ ${roleData?.expertQuote}
       </div>
 
     </motion.div>
+    </>
   );
 }
