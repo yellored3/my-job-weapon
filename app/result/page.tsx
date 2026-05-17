@@ -210,21 +210,6 @@ ${roleData?.expertQuote}
     const isKakao = /KAKAOTALK/i.test(navigator.userAgent);
     const isInApp = /KAKAOTALK|NAVER|Instagram|FB_IAB|FBAN|FBAV/i.test(navigator.userAgent);
 
-    // 카카오톡 인앱 브라우저: html2canvas가 WebView 보안 정책으로 인해 실패함
-    // 외부 브라우저에서 열도록 안내하는 것이 가장 확실한 해결책
-    if (isKakao) {
-      alert(
-        "📌 카카오톡 브라우저에서는 이미지 저장이 제한됩니다.\n\n" +
-        "✅ 해결 방법:\n" +
-        "1. 오른쪽 상단 메뉴(⋮) → [다른 브라우저로 열기]\n" +
-        "   (Chrome / Safari 등)\n\n" +
-        "2. 또는 스크린샷 기능을 이용하세요.\n" +
-        "   • iPhone: 전원 + 볼륨업 동시 클릭\n" +
-        "   • 갤럭시/안드로이드: 전원 + 볼륨다운 동시 클릭"
-      );
-      return;
-    }
-
     setIsCapturing(true);
     try {
       const html2canvas = (await import("html2canvas")).default;
@@ -234,12 +219,15 @@ ${roleData?.expertQuote}
         return;
       }
 
+      // 카카오톡 WebView: scale 낮추고 foreignObjectRendering 비활성화로 안정성 확보
       const canvas = await html2canvas(element, {
-        scale: isMobile ? 1.5 : 2,
+        scale: isKakao ? 1 : (isMobile ? 1.5 : 2),
         useCORS: true,
         allowTaint: true,
         backgroundColor: "#ffffff",
         logging: false,
+        foreignObjectRendering: false,
+        imageTimeout: 0,
       });
 
       // 모바일 또는 인앱 브라우저 → 오버레이로 이미지 표시 후 "길게 눌러 저장" 안내
