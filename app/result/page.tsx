@@ -13,7 +13,7 @@ export default function ResultPage() {
   const [mounted, setMounted] = useState(false);
   const [copied, setCopied] = useState(false);
   const [isCapturing, setIsCapturing] = useState(false);
-  const [imageDataUrl, setImageDataUrl] = useState<string | null>(null);
+  const [imageDataUrls, setImageDataUrls] = useState<string[]>([]);
 
   useEffect(() => {
     setMounted(true);
@@ -207,20 +207,13 @@ ${roleData?.expertQuote}
 
   const handleSaveImage = async () => {
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-    const isKakao = /KAKAOTALK/i.test(navigator.userAgent);
     const isInApp = /KAKAOTALK|NAVER|Instagram|FB_IAB|FBAN|FBAV/i.test(navigator.userAgent);
 
     setIsCapturing(true);
     try {
       const html2canvas = (await import("html2canvas")).default;
-      const element = document.getElementById("capture-card");
-      if (!element) {
-        setIsCapturing(false);
-        return;
-      }
-
-      // 캡처 전용 간소화 카드 사용 — Tailwind·SVG·애니메이션 없이 인라인 스타일만 사용
-      const canvas = await html2canvas(element, {
+      const cardIds = ["capture-card-1", "capture-card-2", "capture-card-3"];
+      const options = {
         scale: isMobile ? 1 : 2,
         useCORS: true,
         allowTaint: true,
@@ -228,44 +221,45 @@ ${roleData?.expertQuote}
         logging: false,
         foreignObjectRendering: false,
         imageTimeout: 0,
-      });
+      };
 
-      // 모바일/인앱 브라우저 → 오버레이로 이미지 표시 후 "길게 눌러 저장" 안내
       if (isMobile || isInApp) {
-        setImageDataUrl(canvas.toDataURL("image/png"));
-        setIsCapturing(false);
-        return;
-      }
-
-      // 데스크탑: 파일 직접 다운로드
-      const blob = await new Promise<Blob | null>((resolve) =>
-        canvas.toBlob(resolve, "image/png")
-      );
-
-      if (!blob) {
-        alert("이미지 생성에 실패했습니다. 스크린샷을 이용해 주세요.");
-        setIsCapturing(false);
-        return;
-      }
-
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "취업무기리포트.png";
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      setTimeout(() => URL.revokeObjectURL(url), 10000);
-
-    } catch {
-      if (isMobile || isInApp) {
-        alert(
-          "이미지 생성에 실패했습니다.\n스크린샷 기능을 이용해 주세요.\n\n" +
-          "• iPhone: 전원 + 볼륨업\n• 갤럭시/안드로이드: 전원 + 볼륨다운"
-        );
+        // 모바일/인앱: 3장 순서대로 캡처 후 오버레이로 표시
+        const dataUrls: string[] = [];
+        for (const id of cardIds) {
+          const el = document.getElementById(id);
+          if (!el) continue;
+          const canvas = await html2canvas(el, options);
+          dataUrls.push(canvas.toDataURL("image/png"));
+        }
+        setImageDataUrls(dataUrls);
       } else {
-        alert("이미지 저장에 실패했습니다. 스크린샷을 이용해 주세요.");
+        // 데스크탑: 3장 각각 파일로 다운로드
+        const labels = ["1-기본", "2-템플릿", "3-심층리포트"];
+        for (let i = 0; i < cardIds.length; i++) {
+          const el = document.getElementById(cardIds[i]);
+          if (!el) continue;
+          const canvas = await html2canvas(el, options);
+          const blob = await new Promise<Blob | null>((resolve) =>
+            canvas.toBlob(resolve, "image/png")
+          );
+          if (!blob) continue;
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = `취업무기리포트_${labels[i]}.png`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          setTimeout(() => URL.revokeObjectURL(url), 10000);
+        }
       }
+    } catch {
+      alert(
+        isMobile || isInApp
+          ? "이미지 생성에 실패했습니다.\n스크린샷 기능을 이용해 주세요.\n\n• iPhone: 전원 + 볼륨업\n• 갤럭시/안드로이드: 전원 + 볼륨다운"
+          : "이미지 저장에 실패했습니다. 스크린샷을 이용해 주세요."
+      );
     } finally {
       setIsCapturing(false);
     }
@@ -280,115 +274,168 @@ ${roleData?.expertQuote}
 
   return (
     <>
-    {/* 캡처 전용 간소화 카드 — 화면 밖 고정, 인라인 스타일만 사용 (Tailwind·SVG·애니메이션 없음) */}
-    <div
-      id="capture-card"
-      style={{
-        position: "fixed",
-        left: "-9999px",
-        top: 0,
-        width: "360px",
-        backgroundColor: "#ffffff",
-        fontFamily: "system-ui, -apple-system, sans-serif",
-      }}
-    >
-      {/* 헤더 */}
-      <div style={{ background: "#1e3a8a", color: "#ffffff", padding: "28px 20px", textAlign: "center" }}>
-        <div style={{ fontSize: "10px", letterSpacing: "3px", marginBottom: "10px", opacity: 0.7 }}>OFFICIAL CERTIFICATE</div>
-        <div style={{ fontSize: "24px", fontWeight: "900", lineHeight: "1.3", marginBottom: "8px" }}>{personaTitle}</div>
-        <div style={{ fontSize: "13px", opacity: 0.85 }}>나만의 취업 무기 통합 리포트</div>
+    {/* ── 캡처 카드 1: 기본 정보 ── */}
+    <div id="capture-card-1" style={{ position:"fixed", left:"-9999px", top:0, width:"360px", backgroundColor:"#ffffff", fontFamily:"system-ui,-apple-system,sans-serif" }}>
+      <div style={{ background:"#1e3a8a", color:"#ffffff", padding:"28px 20px", textAlign:"center" }}>
+        <div style={{ fontSize:"10px", letterSpacing:"3px", marginBottom:"10px", opacity:0.7 }}>OFFICIAL CERTIFICATE · 1 / 3</div>
+        <div style={{ fontSize:"24px", fontWeight:"900", lineHeight:"1.3", marginBottom:"8px" }}>{personaTitle}</div>
+        <div style={{ fontSize:"13px", opacity:0.85 }}>나만의 취업 무기 통합 리포트</div>
       </div>
-
-      {/* 직업관 */}
-      <div style={{ padding: "18px 20px", borderBottom: "1px solid #e2e8f0", background: "#f8fafc" }}>
-        <div style={{ fontSize: "10px", color: "#94a3b8", letterSpacing: "2px", marginBottom: "8px" }}>나의 직업관</div>
-        <div style={{ fontSize: "15px", fontWeight: "700", color: "#1e293b", marginBottom: "6px" }}>
-          나에게 일이란 &quot;{state.step1.meaning}&quot;이다.
-        </div>
-        <div style={{ fontSize: "13px", color: "#64748b" }}>왜냐하면 {state.step1.reason} 때문입니다.</div>
+      <div style={{ padding:"18px 20px", borderBottom:"1px solid #e2e8f0", background:"#f8fafc" }}>
+        <div style={{ fontSize:"10px", color:"#94a3b8", letterSpacing:"2px", marginBottom:"8px" }}>나의 직업관</div>
+        <div style={{ fontSize:"15px", fontWeight:"700", color:"#1e293b", marginBottom:"6px" }}>나에게 일이란 &quot;{state.step1.meaning}&quot;이다.</div>
+        <div style={{ fontSize:"13px", color:"#64748b" }}>왜냐하면 {state.step1.reason} 때문입니다.</div>
       </div>
-
-      {/* 필수 기준 */}
-      <div style={{ padding: "18px 20px", borderBottom: "1px solid #e2e8f0" }}>
-        <div style={{ fontSize: "11px", fontWeight: "700", color: "#1e3a8a", marginBottom: "12px" }}>✓ 필수로 찾아야 할 공간</div>
+      <div style={{ padding:"18px 20px", borderBottom:"1px solid #e2e8f0" }}>
+        <div style={{ fontSize:"11px", fontWeight:"700", color:"#1e3a8a", marginBottom:"12px" }}>✓ 필수로 찾아야 할 공간</div>
         {top3Values.map((val, idx) => (
-          <div key={idx} style={{ marginBottom: "10px" }}>
-            <div style={{ fontSize: "11px", color: "#2563eb", fontWeight: "700", marginBottom: "2px" }}>Top {idx + 1}. {val}</div>
-            <div style={{ fontSize: "12px", color: "#334155", lineHeight: "1.5" }}>{VALUE_MAPPINGS[val]?.mustHave}</div>
+          <div key={idx} style={{ marginBottom:"10px" }}>
+            <div style={{ fontSize:"11px", color:"#2563eb", fontWeight:"700", marginBottom:"2px" }}>Top {idx+1}. {val}</div>
+            <div style={{ fontSize:"12px", color:"#334155", lineHeight:"1.5" }}>{VALUE_MAPPINGS[val]?.mustHave}</div>
           </div>
         ))}
       </div>
-
-      {/* 피해야 할 기준 */}
-      <div style={{ padding: "18px 20px", borderBottom: "1px solid #e2e8f0" }}>
-        <div style={{ fontSize: "11px", fontWeight: "700", color: "#64748b", marginBottom: "12px" }}>! 가급적 피해야 할 공간</div>
+      <div style={{ padding:"18px 20px", borderBottom:"1px solid #e2e8f0" }}>
+        <div style={{ fontSize:"11px", fontWeight:"700", color:"#64748b", marginBottom:"12px" }}>! 가급적 피해야 할 공간</div>
         {bottom3Values.map((val, idx) => (
-          <div key={idx} style={{ marginBottom: "10px" }}>
-            <div style={{ fontSize: "11px", color: "#94a3b8", fontWeight: "700", marginBottom: "2px" }}>Bottom {idx + 1}. {val}</div>
-            <div style={{ fontSize: "12px", color: "#334155", lineHeight: "1.5" }}>{VALUE_MAPPINGS[val]?.bottomAvoid}</div>
+          <div key={idx} style={{ marginBottom:"10px" }}>
+            <div style={{ fontSize:"11px", color:"#94a3b8", fontWeight:"700", marginBottom:"2px" }}>Bottom {idx+1}. {val}</div>
+            <div style={{ fontSize:"12px", color:"#334155", lineHeight:"1.5" }}>{VALUE_MAPPINGS[val]?.bottomAvoid}</div>
           </div>
         ))}
       </div>
-
-      {/* 강점 키워드 */}
-      <div style={{ padding: "18px 20px", background: "#0f172a", borderBottom: "1px solid #1e293b" }}>
-        <div style={{ fontSize: "10px", color: "#94a3b8", marginBottom: "10px" }}>나의 강점 키워드 3종</div>
+      <div style={{ padding:"18px 20px", background:"#0f172a", borderBottom:"1px solid #1e293b" }}>
+        <div style={{ fontSize:"10px", color:"#94a3b8", marginBottom:"10px" }}>나의 강점 키워드 3종</div>
         <div>
           {roleData?.keywords.map((kw, i) => (
-            <span
-              key={i}
-              style={{
-                display: "inline-block",
-                margin: "0 6px 6px 0",
-                padding: "4px 12px",
-                background: "#1e293b",
-                border: "1px solid #334155",
-                color: "#f97316",
-                fontWeight: "700",
-                borderRadius: "6px",
-                fontSize: "13px",
-              }}
-            >
-              #{kw}
-            </span>
+            <span key={i} style={{ display:"inline-block", margin:"0 6px 6px 0", padding:"4px 12px", background:"#1e293b", border:"1px solid #334155", color:"#f97316", fontWeight:"700", borderRadius:"6px", fontSize:"13px" }}>#{kw}</span>
           ))}
+        </div>
+      </div>
+      <div style={{ padding:"18px 20px", background:"#1e293b", color:"#ffffff" }}>
+        <div style={{ fontSize:"10px", color:"#f97316", fontWeight:"700", marginBottom:"8px" }}>전문가 한 줄 평</div>
+        <div style={{ fontSize:"13px", lineHeight:"1.6", color:"#e2e8f0" }}>{roleData?.expertQuote}</div>
+      </div>
+      <div style={{ padding:"10px", background:"#f1f5f9", textAlign:"center", fontSize:"10px", color:"#94a3b8" }}>나만의 취업 무기 리포트</div>
+    </div>
+
+    {/* ── 캡처 카드 2: 실전 면접 & 자소서 템플릿 ── */}
+    <div id="capture-card-2" style={{ position:"fixed", left:"-9999px", top:0, width:"360px", backgroundColor:"#0f172a", fontFamily:"system-ui,-apple-system,sans-serif" }}>
+      <div style={{ background:"#0f172a", color:"#ffffff", padding:"24px 20px", borderBottom:"1px solid #1e293b" }}>
+        <div style={{ fontSize:"10px", color:"#94a3b8", letterSpacing:"2px", marginBottom:"6px" }}>CHEAT KEY · 2 / 3</div>
+        <div style={{ fontSize:"18px", fontWeight:"900" }}>실전 면접 &amp; 자소서 템플릿</div>
+      </div>
+      <div style={{ padding:"18px 20px", borderBottom:"1px solid #1e293b" }}>
+        <div style={{ fontSize:"10px", color:"#94a3b8", marginBottom:"10px" }}>나의 강점 키워드 3종</div>
+        <div>
+          {roleData?.keywords.map((kw, i) => (
+            <span key={i} style={{ display:"inline-block", margin:"0 6px 6px 0", padding:"4px 12px", background:"#1e293b", border:"1px solid #334155", color:"#f97316", fontWeight:"700", borderRadius:"6px", fontSize:"13px" }}>#{kw}</span>
+          ))}
+        </div>
+      </div>
+      <div style={{ padding:"18px 20px", background:"#1e293b", color:"#cbd5e1" }}>
+        <div style={{ fontSize:"10px", color:"#94a3b8", marginBottom:"12px" }}>1분 자기소개 / 자소서 템플릿</div>
+        <div style={{ fontSize:"13px", lineHeight:"1.8", marginBottom:"10px", color:"#f1f5f9" }}>
+          &quot;저의 강점은 <span style={{ color:"#ffffff", fontWeight:"700" }}>[{roleData?.keywords.join(", ")}]</span> 에 따른 역량입니다.&quot;
+        </div>
+        <div style={{ fontSize:"13px", lineHeight:"1.8", color:"#cbd5e1" }}>
+          &quot;저는 <span style={{ color:"#f97316", fontWeight:"700" }}>{roleData?.templateText}</span>
+        </div>
+        <div style={{ fontSize:"13px", lineHeight:"1.8", marginTop:"6px", padding:"8px 12px", background:"#0f172a", borderRadius:"6px", color:"#94a3b8" }}>
+          {roleData?.starExample1}
+        </div>
+        <div style={{ fontSize:"13px", lineHeight:"1.8", marginTop:"10px", color:"#cbd5e1" }}>
+          또한 팀적으로도 이러한 역량을 적극 발휘할 수 있습니다.
+        </div>
+        <div style={{ fontSize:"13px", lineHeight:"1.8", marginTop:"6px", padding:"8px 12px", background:"#0f172a", borderRadius:"6px", color:"#94a3b8" }}>
+          {roleData?.starExample2}
+        </div>
+        <div style={{ fontSize:"13px", lineHeight:"1.8", marginTop:"8px", color:"#f97316", fontWeight:"600" }}>
+          {roleData?.closingStatement}&quot;
+        </div>
+      </div>
+      <div style={{ padding:"10px", background:"#020617", textAlign:"center", fontSize:"10px", color:"#475569" }}>나만의 취업 무기 리포트</div>
+    </div>
+
+    {/* ── 캡처 카드 3: 심층 취업 무기 리포트 ── */}
+    <div id="capture-card-3" style={{ position:"fixed", left:"-9999px", top:0, width:"360px", backgroundColor:"#ffffff", fontFamily:"system-ui,-apple-system,sans-serif" }}>
+      <div style={{ background:"#1e3a8a", color:"#ffffff", padding:"20px", textAlign:"center" }}>
+        <div style={{ fontSize:"10px", letterSpacing:"2px", marginBottom:"6px", opacity:0.7 }}>DEEP REPORT · 3 / 3</div>
+        <div style={{ fontSize:"16px", fontWeight:"900" }}>심층 취업 무기 리포트</div>
+      </div>
+
+      {/* 1. 가치관 분석 */}
+      <div style={{ padding:"18px 20px", borderBottom:"1px solid #e2e8f0" }}>
+        <div style={{ fontSize:"13px", fontWeight:"700", color:"#1e3a8a", marginBottom:"10px" }}>1. 가치관 분석: &apos;{VALUE_MAPPINGS[top3Values[0]]?.analysisTitle}&apos;</div>
+        <div style={{ fontSize:"12px", color:"#334155", lineHeight:"1.7", marginBottom:"10px" }}>
+          당신은 일을 <span style={{ color:"#f97316", fontWeight:"700" }}>&apos;{state.step1.meaning}&apos;</span>(이)라고 정의했습니다. {meaningInsight}
+        </div>
+        <div style={{ padding:"10px 12px", background:"#f8fafc", borderLeft:"3px solid #3b82f6", borderRadius:"4px" }}>
+          <div style={{ fontSize:"12px", color:"#334155", lineHeight:"1.6", marginBottom:"6px" }}>- {VALUE_MAPPINGS[top3Values[0]]?.analysisDesc}</div>
+          <div style={{ fontSize:"12px", color:"#334155", lineHeight:"1.6" }}>- {VALUE_MAPPINGS[top3Values[1]]?.analysisDesc}</div>
+        </div>
+      </div>
+
+      {/* 2. 역할 분석 */}
+      <div style={{ padding:"18px 20px", borderBottom:"1px solid #e2e8f0" }}>
+        <div style={{ fontSize:"13px", fontWeight:"700", color:"#f97316", marginBottom:"10px" }}>2. 조직 내 역할 분석: &apos;{roleData?.analysisTitle}&apos;</div>
+        <div style={{ fontSize:"12px", color:"#334155", lineHeight:"1.7", marginBottom:"8px" }}>
+          가장 편안함을 느끼는 역할: <span style={{ fontWeight:"700" }}>{state.step3.naturalRoles.join(", ")}</span>
+        </div>
+        <div style={{ padding:"10px 12px", background:"#f8fafc", borderLeft:"3px solid #f97316", borderRadius:"4px", fontSize:"12px", color:"#334155", lineHeight:"1.6" }}>
+          {roleData?.analysisDesc}
+        </div>
+      </div>
+
+      {/* 3. 취업 전략 */}
+      <div style={{ padding:"18px 20px", borderBottom:"1px solid #e2e8f0" }}>
+        <div style={{ fontSize:"13px", fontWeight:"700", color:"#0d9488", marginBottom:"12px" }}>3. 취업 전략 &amp; 치트키 활용 조언</div>
+
+        <div style={{ marginBottom:"14px" }}>
+          <div style={{ fontSize:"11px", fontWeight:"700", color:"#1e3a8a", marginBottom:"6px" }}>자소서 작성 팁: {roleData?.resumeTipTitle}</div>
+          <div style={{ fontSize:"12px", color:"#334155", lineHeight:"1.6" }}>{roleData?.resumeTipDesc}</div>
+        </div>
+
+        <div>
+          <div style={{ fontSize:"11px", fontWeight:"700", color:"#f97316", marginBottom:"6px" }}>면접 대응 전략: {roleData?.interviewTipTitle}</div>
+          <div style={{ fontSize:"12px", color:"#334155", lineHeight:"1.6" }}>{roleData?.interviewTipDesc}</div>
         </div>
       </div>
 
       {/* 전문가 한 줄 평 */}
-      <div style={{ padding: "18px 20px", background: "#1e293b", color: "#ffffff" }}>
-        <div style={{ fontSize: "10px", color: "#f97316", fontWeight: "700", marginBottom: "8px", letterSpacing: "1px" }}>전문가 한 줄 평</div>
-        <div style={{ fontSize: "13px", lineHeight: "1.6", color: "#e2e8f0" }}>{roleData?.expertQuote}</div>
+      <div style={{ padding:"18px 20px", background:"#1e293b", color:"#ffffff" }}>
+        <div style={{ fontSize:"10px", color:"#f97316", fontWeight:"700", marginBottom:"8px" }}>전문가 한 줄 평</div>
+        <div style={{ fontSize:"13px", lineHeight:"1.6", color:"#e2e8f0" }}>{roleData?.expertQuote}</div>
       </div>
-
-      {/* 푸터 */}
-      <div style={{ padding: "10px", background: "#f1f5f9", textAlign: "center", fontSize: "10px", color: "#94a3b8" }}>
-        나만의 취업 무기 리포트
-      </div>
+      <div style={{ padding:"10px", background:"#f1f5f9", textAlign:"center", fontSize:"10px", color:"#94a3b8" }}>나만의 취업 무기 리포트</div>
     </div>
 
-    {/* 이미지 저장 오버레이 */}
-    {imageDataUrl && (
-      <div
-        className="fixed inset-0 bg-black/90 z-50 flex flex-col items-center justify-center p-4 gap-5"
-        onClick={() => setImageDataUrl(null)}
-      >
-        <p className="text-white text-center font-bold text-base leading-relaxed">
-          📸 이미지를 <strong className="text-yellow-300">길게 눌러</strong> 사진 앱에 저장하세요
-        </p>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={imageDataUrl}
-          alt="취업무기리포트"
-          className="max-w-full max-h-[72vh] object-contain rounded-xl shadow-2xl"
-          onClick={(e) => e.stopPropagation()}
-        />
-        <button
-          onClick={() => setImageDataUrl(null)}
-          className="px-6 py-2 bg-white/20 hover:bg-white/30 text-white rounded-full text-sm transition-colors"
-        >
-          닫기
-        </button>
+    {/* ── 이미지 저장 오버레이 ── */}
+    {imageDataUrls.length > 0 && (
+      <div className="fixed inset-0 bg-black/90 z-50 flex flex-col" onClick={() => setImageDataUrls([])}>
+        <div className="flex-shrink-0 pt-5 pb-3 px-4 text-center">
+          <p className="text-white font-bold text-base leading-relaxed">
+            📸 이미지를 <strong className="text-yellow-300">길게 눌러</strong> 사진 앱에 저장하세요
+          </p>
+          <p className="text-white/60 text-xs mt-1">총 {imageDataUrls.length}장 · 각각 저장해주세요</p>
+        </div>
+        <div className="flex-1 overflow-y-auto px-4 pb-4 flex flex-col gap-4" onClick={(e) => e.stopPropagation()}>
+          {imageDataUrls.map((url, i) => (
+            <div key={i} className="flex flex-col items-center gap-1">
+              <span className="text-white/50 text-xs">{i + 1} / {imageDataUrls.length}</span>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={url} alt={`취업무기리포트 ${i+1}`} className="w-full rounded-xl shadow-2xl" />
+            </div>
+          ))}
+        </div>
+        <div className="flex-shrink-0 pb-6 flex justify-center">
+          <button
+            onClick={() => setImageDataUrls([])}
+            className="px-6 py-2 bg-white/20 hover:bg-white/30 text-white rounded-full text-sm transition-colors"
+          >
+            닫기
+          </button>
+        </div>
       </div>
     )}
     <motion.div
