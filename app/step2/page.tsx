@@ -13,6 +13,7 @@ export default function Step2Page() {
   const [top5, setTop5] = useState<string[]>([]);
   const [bottom5, setBottom5] = useState<string[]>([]);
   const [mounted, setMounted] = useState(false);
+  const [clickedState, setClickedState] = useState<{ val: string; type: "top" | "bottom" } | null>(null);
 
   useEffect(() => {
     setTop5(state.step2.topValues);
@@ -41,6 +42,25 @@ export default function Step2Page() {
   const moveToBottom = (val: string) => {
     if (bottom5.length < 5) setBottom5([...bottom5, val]);
   };
+
+  const handleMoveToTop = (val: string) => {
+    if (top5.length >= 5 || clickedState) return;
+    setClickedState({ val, type: "top" });
+    setTimeout(() => {
+      moveToTop(val);
+      setClickedState(null);
+    }, 200);
+  };
+
+  const handleMoveToBottom = (val: string) => {
+    if (bottom5.length >= 5 || clickedState) return;
+    setClickedState({ val, type: "bottom" });
+    setTimeout(() => {
+      moveToBottom(val);
+      setClickedState(null);
+    }, 200);
+  };
+
   const returnToPool = (val: string, from: "top" | "bottom") => {
     if (from === "top") setTop5(top5.filter((x) => x !== val));
     if (from === "bottom") setBottom5(bottom5.filter((x) => x !== val));
@@ -56,42 +76,76 @@ export default function Step2Page() {
         <h2 className="text-2xl font-bold mb-2 text-brand-blue dark:text-blue-400">
           2단계: 직업 가치관
         </h2>
-        <p className="mb-6 text-slate-500 dark:text-slate-400 text-sm">
+        <p className="mb-4 text-slate-500 dark:text-slate-400 text-sm">
           아래 리스트에서 나에게 가장 중요한(TOP 5) 것과 덜 중요한(BOTTOM 5) 것을 5개씩 선택하세요.
         </p>
         
-        <div className="flex-grow overflow-y-auto max-h-[50vh] md:max-h-full pr-2 space-y-3">
-          <AnimatePresence>
-            {pool.map((val) => (
-              <motion.div
-                layoutId={`card-${val}`}
-                key={val}
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.9 }}
-                className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-700/50 rounded-xl border border-slate-100 dark:border-slate-600 shadow-sm"
-              >
-                <span className="font-semibold text-slate-700 dark:text-slate-200">{val}</span>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => moveToTop(val)}
-                    disabled={top5.length >= 5}
-                    className="px-3 py-1.5 text-xs font-bold rounded-lg bg-orange-100 text-brand-orange hover:bg-orange-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                  >
-                    TOP 5
-                  </button>
-                  <button
-                    onClick={() => moveToBottom(val)}
-                    disabled={bottom5.length >= 5}
-                    className="px-3 py-1.5 text-xs font-bold rounded-lg bg-slate-200 text-slate-600 hover:bg-slate-300 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                  >
-                    BTM 5
-                  </button>
-                </div>
-              </motion.div>
-            ))}
-          </AnimatePresence>
+        {/* Pool Area - Scrollable Box */}
+        <div className="relative flex-grow">
+          <div className="overflow-y-auto max-h-[380px] md:max-h-[460px] p-3.5 bg-slate-50 dark:bg-slate-900/30 rounded-2xl border border-slate-100 dark:border-slate-800/80 space-y-3 custom-scrollbar pr-2">
+            <AnimatePresence>
+              {pool.map((val) => (
+                <motion.div
+                  layoutId={`card-${val}`}
+                  key={val}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  className="flex items-center justify-between p-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-100/80 dark:border-slate-700/60 shadow-sm hover:shadow transition-all duration-200"
+                >
+                  <span className="font-semibold text-slate-700 dark:text-slate-200">{val}</span>
+                  <div className="flex gap-2">
+                    <motion.button
+                      whileTap={{ scale: 0.92 }}
+                      onClick={() => handleMoveToTop(val)}
+                      disabled={top5.length >= 5 || clickedState !== null}
+                      className={`px-3.5 py-1.8 text-xs font-bold rounded-xl border transition-all duration-150 flex items-center gap-1.5 disabled:opacity-30 disabled:cursor-not-allowed ${
+                        clickedState?.val === val && clickedState?.type === "top"
+                          ? "bg-brand-orange text-white border-brand-orange shadow-[inset_0_2px_4px_rgba(0,0,0,0.15)] scale-95"
+                          : "bg-orange-50/80 text-brand-orange border-orange-200/80 shadow-[0_2px_4px_rgba(249,115,22,0.06)] hover:bg-orange-100/70 active:bg-brand-orange active:text-white"
+                      }`}
+                    >
+                      <span className="text-[10px] font-bold">＋</span>
+                      <span>TOP 5</span>
+                    </motion.button>
+                    <motion.button
+                      whileTap={{ scale: 0.92 }}
+                      onClick={() => handleMoveToBottom(val)}
+                      disabled={bottom5.length >= 5 || clickedState !== null}
+                      className={`px-3.5 py-1.8 text-xs font-bold rounded-xl border transition-all duration-150 flex items-center gap-1.5 disabled:opacity-30 disabled:cursor-not-allowed ${
+                        clickedState?.val === val && clickedState?.type === "bottom"
+                          ? "bg-slate-600 text-white border-slate-600 shadow-[inset_0_2px_4px_rgba(0,0,0,0.15)] scale-95"
+                          : "bg-slate-100/80 text-slate-600 border-slate-200/80 shadow-[0_2px_4px_rgba(15,23,42,0.05)] hover:bg-slate-200/70 active:bg-slate-600 active:text-white"
+                      }`}
+                    >
+                      <span className="text-[10px] font-bold">＋</span>
+                      <span>BTM 5</span>
+                    </motion.button>
+                  </div>
+                </motion.div>
+              ))}
+            </AnimatePresence>
+            {pool.length === 0 && (
+              <div className="py-12 flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 text-sm">
+                <span className="text-2xl mb-2">✨</span>
+                모든 가치관을 분류했습니다!
+              </div>
+            )}
+          </div>
+          {/* 스크롤 하단 그라데이션 안내 레이어 */}
+          {pool.length > 3 && (
+            <div className="absolute bottom-0 left-0 right-0 h-10 bg-gradient-to-t from-slate-50 dark:from-slate-900/30 to-transparent pointer-events-none rounded-b-2xl" />
+          )}
         </div>
+
+        {/* 스크롤 가이드 마이크로 캡션 */}
+        {pool.length > 3 && (
+          <div className="text-center mt-2.5 mb-1.5">
+            <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-slate-400 dark:text-slate-500 animate-pulse">
+              <span>↕️</span> 아래로 스크롤하여 더 많은 가치관을 확인하세요
+            </span>
+          </div>
+        )}
 
         <div className="flex justify-between mt-8">
           <button 

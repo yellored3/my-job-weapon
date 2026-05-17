@@ -16,6 +16,7 @@ export default function Step3Page() {
   const [potential, setPotential] = useState<string[]>([]);
   const [unpreferred, setUnpreferred] = useState<string[]>([]);
   const [mounted, setMounted] = useState(false);
+  const [clickedState, setClickedState] = useState<{ name: string; bucket: BucketType } | null>(null);
 
   useEffect(() => {
     setNatural(state.step3.naturalRoles);
@@ -45,6 +46,19 @@ export default function Step3Page() {
     if (bucket === "natural" && natural.length < 3) setNatural([...natural, name]);
     if (bucket === "potential" && potential.length < 3) setPotential([...potential, name]);
     if (bucket === "unpreferred" && unpreferred.length < 3) setUnpreferred([...unpreferred, name]);
+  };
+
+  const handleMoveTo = (name: string, bucket: BucketType) => {
+    if (clickedState) return;
+    if (bucket === "natural" && natural.length >= 3) return;
+    if (bucket === "potential" && potential.length >= 3) return;
+    if (bucket === "unpreferred" && unpreferred.length >= 3) return;
+
+    setClickedState({ name, bucket });
+    setTimeout(() => {
+      moveTo(name, bucket);
+      setClickedState(null);
+    }, 200);
   };
 
   const returnToPool = (name: string, bucket: BucketType) => {
@@ -106,10 +120,43 @@ export default function Step3Page() {
                 >
                   <div className="font-bold text-slate-800 dark:text-slate-100">{role.name}</div>
                   <div className="text-xs text-slate-500 dark:text-slate-400 leading-tight">{role.desc}</div>
-                  <div className="flex gap-1 mt-1 justify-center">
-                    <button onClick={() => moveTo(role.name, "natural")} disabled={natural.length >= 3} className="flex-1 text-[10px] font-bold py-1.5 rounded bg-blue-100 text-brand-blue hover:bg-blue-200 disabled:opacity-30">자연</button>
-                    <button onClick={() => moveTo(role.name, "potential")} disabled={potential.length >= 3} className="flex-1 text-[10px] font-bold py-1.5 rounded bg-indigo-100 text-indigo-700 hover:bg-indigo-200 disabled:opacity-30">잠재</button>
-                    <button onClick={() => moveTo(role.name, "unpreferred")} disabled={unpreferred.length >= 3} className="flex-1 text-[10px] font-bold py-1.5 rounded bg-slate-200 text-slate-600 hover:bg-slate-300 disabled:opacity-30">비선호</button>
+                  <div className="flex gap-1.5 mt-1 justify-center">
+                    <motion.button
+                      whileTap={{ scale: 0.92 }}
+                      onClick={() => handleMoveTo(role.name, "natural")}
+                      disabled={natural.length >= 3 || clickedState !== null}
+                      className={`flex-1 text-[11px] font-bold py-2 px-1.5 rounded-xl border transition-all duration-150 flex items-center justify-center gap-0.5 disabled:opacity-30 disabled:cursor-not-allowed ${
+                        clickedState?.name === role.name && clickedState?.bucket === "natural"
+                          ? "bg-brand-blue text-white border-brand-blue shadow-[inset_0_2px_4px_rgba(0,0,0,0.15)] scale-95"
+                          : "bg-blue-50/90 text-brand-blue border-blue-200/80 shadow-[0_2px_4px_rgba(29,78,216,0.06)] hover:bg-blue-100/70"
+                      }`}
+                    >
+                      <span>자연</span>
+                    </motion.button>
+                    <motion.button
+                      whileTap={{ scale: 0.92 }}
+                      onClick={() => handleMoveTo(role.name, "potential")}
+                      disabled={potential.length >= 3 || clickedState !== null}
+                      className={`flex-1 text-[11px] font-bold py-2 px-1.5 rounded-xl border transition-all duration-150 flex items-center justify-center gap-0.5 disabled:opacity-30 disabled:cursor-not-allowed ${
+                        clickedState?.name === role.name && clickedState?.bucket === "potential"
+                          ? "bg-indigo-700 text-white border-indigo-700 shadow-[inset_0_2px_4px_rgba(0,0,0,0.15)] scale-95"
+                          : "bg-indigo-50/90 text-indigo-700 border-indigo-200/80 shadow-[0_2px_4px_rgba(67,56,202,0.06)] hover:bg-indigo-100/70"
+                      }`}
+                    >
+                      <span>잠재</span>
+                    </motion.button>
+                    <motion.button
+                      whileTap={{ scale: 0.92 }}
+                      onClick={() => handleMoveTo(role.name, "unpreferred")}
+                      disabled={unpreferred.length >= 3 || clickedState !== null}
+                      className={`flex-1 text-[11px] font-bold py-2 px-1.5 rounded-xl border transition-all duration-150 flex items-center justify-center gap-0.5 disabled:opacity-30 disabled:cursor-not-allowed ${
+                        clickedState?.name === role.name && clickedState?.bucket === "unpreferred"
+                          ? "bg-slate-600 text-white border-slate-600 shadow-[inset_0_2px_4px_rgba(0,0,0,0.15)] scale-95"
+                          : "bg-slate-100/90 text-slate-600 border-slate-200/80 shadow-[0_2px_4px_rgba(71,85,105,0.05)] hover:bg-slate-200/70"
+                      }`}
+                    >
+                      <span>비선호</span>
+                    </motion.button>
                   </div>
                 </motion.div>
               ))}
