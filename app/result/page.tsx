@@ -563,6 +563,39 @@ ${roleData?.expertQuote}
               <h4 className="text-xl md:text-2xl font-bold border-b-2 border-slate-100 dark:border-slate-700 pb-3 text-teal-600 dark:text-teal-400 mb-5">
                 3. 취업 전략 및 '치트키' 활용 조언
               </h4>
+
+              {/* CHEAT KEY 실전 면접 & 자소서 템플릿 */}
+              <div className="bg-slate-900 text-white rounded-3xl px-4 py-6 md:p-10 relative overflow-hidden shadow-xl mb-8">
+                <div className="absolute -right-10 -top-10 w-40 h-40 bg-brand-orange/20 blur-3xl rounded-full"></div>
+
+                <h3 className="text-xl font-bold mb-6 flex items-center gap-3 relative z-10">
+                  <span className="bg-brand-orange text-white text-xs px-2 py-1 rounded">CHEAT KEY</span>
+                  실전 면접 & 자소서 템플릿
+                </h3>
+
+                <div className="mb-8 relative z-10">
+                  <h4 className="text-slate-400 text-sm mb-3">나의 강점 키워드 3종</h4>
+                  <div className="flex flex-wrap gap-3">
+                    {roleData?.keywords.map((kw, i) => (
+                      <span key={i} className="px-4 py-2 bg-slate-800 border border-slate-700 text-brand-orange font-bold rounded-lg tracking-wide">
+                        #{kw}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="bg-slate-800/80 p-4 md:p-6 rounded-2xl border border-slate-700 font-medium leading-relaxed text-slate-300 relative z-10">
+                  <p>
+                    "저의 강점은 <strong className="text-white">[{roleData?.keywords.join(", ")}]</strong> 에 따른 역량입니다."
+                  </p>
+                  <p className="mt-4 break-keep">
+                    "저는 <strong className="text-brand-orange">{roleData?.templateText}</strong> <span className="text-white bg-slate-700/30 px-1 rounded">{roleData?.starExample1}</span>
+                    <br /><br />
+                    또한 팀적으로도 이러한 역량을 적극 발휘할 수 있습니다. <span className="text-white bg-slate-700/30 px-1 rounded">{roleData?.starExample2}</span> <span className="text-brand-orange">{roleData?.closingStatement}</span>"
+                  </p>
+                </div>
+              </div>
+
               <p className="text-slate-700 dark:text-slate-300 mb-6 text-lg">
                 앞선 강점 3종 키워드(<strong className="text-brand-blue">{roleData?.keywords.map(k => `#${k}`).join(", ")}</strong>)를 자소서와 면접에 녹여낼 때 다음 포인트를 반드시 기억하세요.
               </p>
@@ -600,39 +633,6 @@ ${roleData?.expertQuote}
             </div>
           </section>
 
-          <hr className="border-slate-200 dark:border-slate-800" />
-
-          {/* Section 3: 무기 템플릿 (자소서, 1분 자기소개) */}
-          <section className="bg-slate-900 text-white rounded-3xl px-4 py-6 md:p-10 relative overflow-hidden shadow-xl">
-            <div className="absolute -right-10 -top-10 w-40 h-40 bg-brand-orange/20 blur-3xl rounded-full"></div>
-
-            <h3 className="text-xl font-bold mb-6 flex items-center gap-3 relative z-10">
-              <span className="bg-brand-orange text-white text-xs px-2 py-1 rounded">CHEAT KEY</span>
-              실전 면접 & 자소서 템플릿
-            </h3>
-
-            <div className="mb-8 relative z-10">
-              <h4 className="text-slate-400 text-sm mb-3">나의 강점 키워드 3종</h4>
-              <div className="flex flex-wrap gap-3">
-                {roleData?.keywords.map((kw, i) => (
-                  <span key={i} className="px-4 py-2 bg-slate-800 border border-slate-700 text-brand-orange font-bold rounded-lg tracking-wide">
-                    #{kw}
-                  </span>
-                ))}
-              </div>
-            </div>
-
-            <div className="bg-slate-800/80 p-4 md:p-6 rounded-2xl border border-slate-700 font-medium leading-relaxed text-slate-300 relative z-10">
-              <p>
-                "저의 강점은 <strong className="text-white">[{roleData?.keywords.join(", ")}]</strong> 에 따른 역량입니다."
-              </p>
-              <p className="mt-4 break-keep">
-                "저는 <strong className="text-brand-orange">{roleData?.templateText}</strong> <span className="text-white bg-slate-700/30 px-1 rounded">{roleData?.starExample1}</span>
-                <br /><br />
-                또한 팀적으로도 이러한 역량을 적극 발휘할 수 있습니다. <span className="text-white bg-slate-700/30 px-1 rounded">{roleData?.starExample2}</span> <span className="text-brand-orange">{roleData?.closingStatement}</span>"
-              </p>
-            </div>
-          </section>
         </div>
 
         {/* Warning Banner */}
